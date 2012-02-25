@@ -13,6 +13,11 @@ public class Ativo extends ContaPrimNivel {
 	}
 	
 	@Override
+	public long getOid() {
+		return -1;
+	}
+	
+	@Override
 	public String getNome() {
 		return ATIVO;
 	}

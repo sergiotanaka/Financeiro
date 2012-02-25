@@ -12,6 +12,11 @@ public class Receitas extends ContaPrimNivel {
 	}
 
 	@Override
+	public long getOid() {
+		return -5;
+	}
+
+	@Override
 	public String getNome() {
 		return RECEITAS;
 	}

@@ -62,7 +62,8 @@ import domain.exercicio.presentation.HistoricoPresentation;
  * 8. Refatorar. Fazer o MVC certinho.<br>
  * 9. Estudar o form builder. Melhorar as IHMs.<br>
  * 10. Validações.<br>
- * 11. Mudar o relacionamento conta historico.
+ * 11. Mudar o relacionamento conta historico.<br>
+ * 12. Repositorio de conta
  */
 public class MainApp {
 

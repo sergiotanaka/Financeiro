@@ -11,6 +11,11 @@ public class Passivo extends ContaPrimNivel {
 	public NaturezaConta getNatureza() {
 		return NaturezaConta.CREDORA;
 	}
+	
+	@Override
+	public long getOid() {
+		return -2;
+	}
 
 	@Override
 	public String getNome() {

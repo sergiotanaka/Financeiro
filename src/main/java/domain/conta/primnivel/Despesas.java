@@ -12,6 +12,11 @@ public class Despesas extends ContaPrimNivel {
 	}
 
 	@Override
+	public long getOid() {
+		return -4;
+	}
+	
+	@Override
 	public String getNome() {
 		return DESPESAS;
 	}

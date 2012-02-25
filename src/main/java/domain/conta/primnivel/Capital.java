@@ -10,6 +10,11 @@ public class Capital extends ContaPrimNivel {
 	public NaturezaConta getNatureza() {
 		return NaturezaConta.CREDORA;
 	}
+	
+	@Override
+	public long getOid() {
+		return -3;
+	}
 
 	@Override
 	public String getNome() {

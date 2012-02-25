@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import util.database.ConnectionHolder;
+import util.database.OidGenerator;
 
 public class RepositorioPlano {
 	/**
@@ -35,12 +36,16 @@ public class RepositorioPlano {
 	 */
 	public void updatePlano(PlanoDeContas plano) {
 		// 1. atualiza ou insere a conta.
+		for (Conta conta : plano.getTodasContas()) {
+			updateOrCreateConta(conta);
+		}
+
 		// 2. verificar se alguma conta foi excluída.
 
 	}
 
 	private void buildArvoreDaConta(ContaSintetica conta) {
-		List<Conta> subcontas = getContasPorPai(conta.getNome());
+		List<Conta> subcontas = getContasPorPai(conta);
 		for (Conta subconta : subcontas) {
 			if (subconta instanceof ContaSintetica) {
 				conta.addSubConta(subconta);
@@ -51,21 +56,21 @@ public class RepositorioPlano {
 		}
 	}
 
-	private List<Conta> getContasPorPai(String idContaPai) {
+	private List<Conta> getContasPorPai(ContaSintetica contaPai) {
 		try {
 			List<Conta> contas = new ArrayList<Conta>();
 
 			Statement st = ConnectionHolder.getConnection().createStatement();
 			ResultSet rs = st
-					.executeQuery("SELECT oid, \"NOME\", \"NOME_CONTA_PAI\", \"TIPO_CONTA\" FROM \"CONTA\" WHERE \"NOME_CONTA_PAI\" LIKE '"
-							+ idContaPai + "'");
+					.executeQuery("SELECT oid_conta, nome, tipo_conta FROM conta WHERE oid_conta_pai = "
+							+ contaPai.getOid());
 			while (rs.next()) {
 				// 1 == ContaSintetica
 				// 2 == ContaAnalitica
 				Conta conta = null;
-				if (rs.getInt(4) == 1) {
+				if (rs.getInt(3) == 1) {
 					conta = new ContaSintetica();
-				} else if (rs.getInt(4) == 2) {
+				} else if (rs.getInt(3) == 2) {
 					conta = new ContaAnalitica();
 				}
 				conta.setOid(rs.getLong(1));
@@ -82,9 +87,21 @@ public class RepositorioPlano {
 		}
 	}
 
-	private void updateConta(Conta conta) {
+	/**
+	 * Premissa: conta com OID = 0 é uma conta nova.
+	 * 
+	 * @param conta
+	 */
+	private void updateOrCreateConta(Conta conta) {
 		try {
 			// 1. atualiza ou insere a conta.
+			if (conta.getOid() == 0) {
+				// inserir
+				createConta(conta);
+			} else {
+				// atualizar
+				updateConta(conta);
+			}
 
 			int foovalue = 500;
 			PreparedStatement st = ConnectionHolder
@@ -96,6 +113,35 @@ public class RepositorioPlano {
 			System.out.println(rowsDeleted + " rows deleted");
 			st.close();
 		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void updateConta(Conta conta) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void createConta(Conta conta) {
+		// 1. obter o proximo OID
+		conta.setOid(OidGenerator.getNextOid());
+
+		try {
+			// 2. preparar o statement
+			PreparedStatement st = ConnectionHolder.getConnection()
+					.prepareStatement(
+							"insert into conta(oid_conta, nome, oid_conta_pai, tipo_conta) "
+									+ " values(?, ?, ?, ?)");
+			st.setLong(1, conta.getOid());
+			st.setString(2, conta.getNome());
+			st.setLong(3, conta.getContaPai().getOid());
+			st.setInt(4, conta instanceof ContaSintetica ? 1 : 2);
+
+			// 3. executar
+			int rowsInserted = st.executeUpdate();
+			st.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

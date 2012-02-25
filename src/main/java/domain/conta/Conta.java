@@ -14,7 +14,7 @@ import domain.conta.primnivel.Receitas;
 public abstract class Conta extends Model {
 	private static final long serialVersionUID = 1L;
 
-	private long oid;
+	private long oid = 0;
 	private String nome;
 	protected ContaSintetica contaPai;
 	private final Saldo saldo = new Saldo();

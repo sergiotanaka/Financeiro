@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="lib/jgoodies-binding-2.5.1/lib/jgoodies-common-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/jgoodies-forms-1.4.2/jgoodies-forms-1.4.2.jar"/>
 	<classpathentry kind="lib" path="lib/jgoodies-validation-2.4.0/jgoodies-validation-2.4.0.jar"/>
+	<classpathentry kind="lib" path="lib/postgresql-9.1-901.jdbc4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
