@@ -63,7 +63,7 @@ import domain.exercicio.presentation.HistoricoPresentation;
  * 9. Estudar o form builder. Melhorar as IHMs.<br>
  * 10. Validações.<br>
  * 11. Mudar o relacionamento conta historico.<br>
- * 12. Repositorio de conta
+ * 12. Repositorio de plano.
  */
 public class MainApp {
 
@@ -89,12 +89,10 @@ public class MainApp {
 			Date inicio = calendar.getTime();
 			calendar.set(2012, 12, 31);
 			Date fim = calendar.getTime();
-			
-			RepositorioPlano repositorioPlano = new RepositorioPlano();
-			PlanoDeContas plano = repositorioPlano.retrievePlano();
 
-			exercicio = new Exercicio(inicio, fim, plano);
-//			exercicio = new Exercicio(inicio, fim, PlanoDeContas.buildPlano());
+			exercicio = new Exercicio(inicio, fim);
+			// exercicio = new Exercicio(inicio, fim,
+			// PlanoDeContas.buildPlano());
 			exercicio.getCentrosCusto().addAll(
 					Arrays.asList(new CentroCusto("Sergio"), new CentroCusto(
 							"Suiani")));
@@ -125,8 +123,7 @@ public class MainApp {
 	public void lancarHistorico() {
 		final Historico historico = new Historico(new Date(), null, null, "",
 				0.0);
-		final HistoricoPresentation model = new HistoricoPresentation(
-				historico);
+		final HistoricoPresentation model = new HistoricoPresentation(historico);
 
 		manterHistorico(model, new HistoricoAction(model, true));
 	}
@@ -142,8 +139,7 @@ public class MainApp {
 		private Window container;
 		private boolean novo;
 
-		public HistoricoAction(HistoricoPresentation model,
-				boolean novo) {
+		public HistoricoAction(HistoricoPresentation model, boolean novo) {
 			super(novo ? "Inserir" : "Ok");
 			this.model = model;
 			this.novo = novo;
@@ -172,8 +168,7 @@ public class MainApp {
 		}
 	}
 
-	public void manterHistorico(final HistoricoPresentation model,
-			Action action) {
+	public void manterHistorico(final HistoricoPresentation model, Action action) {
 		JPanel historicoPanel = guiFactory.createHistoricoPanel(model,
 				exercicio, action);
 
@@ -192,8 +187,10 @@ public class MainApp {
 		final JDialog seletorDialog = new JDialog(mainFrame,
 				"Selecione a conta", true);
 
-		List<ContaAnalitica> contasAnaliticas = exercicio.getPlano()
-				.getContasAnaliticas();
+		RepositorioPlano repositorioPlano = new RepositorioPlano();
+		PlanoDeContas plano = repositorioPlano.retrievePlano();
+
+		List<ContaAnalitica> contasAnaliticas = plano.getContasAnaliticas();
 		final ValueHolder selectionHolder = new ValueHolder();
 		JComboBox contasComboBox = BasicComponentFactory
 				.createComboBox(new SelectionInList<ContaAnalitica>(
@@ -367,8 +364,9 @@ public class MainApp {
 		final JDialog saldoDialog = new JDialog(mainFrame,
 				"Saldo do exercício", true);
 
-//		exercicio.processarSaldos(null);
-		final List<Conta> todasContas = exercicio.getPlano().getTodasContas();
+		RepositorioPlano repositorioPlano = new RepositorioPlano();
+		PlanoDeContas plano = repositorioPlano.retrievePlano();
+		final List<Conta> todasContas = plano.getTodasContas();
 		final SelectionInList<Conta> selectionInList = new SelectionInList<Conta>(
 				todasContas);
 		AbstractTableAdapter<Historico> tableAdapter = new AbstractTableAdapter<Historico>(
@@ -387,7 +385,8 @@ public class MainApp {
 					return formatDinheiro(todasContas.get(rowIndex).getSaldo()
 							.getDebito());
 				case 3:
-					return formatDinheiro(todasContas.get(rowIndex).getValorSaldo());
+					return formatDinheiro(todasContas.get(rowIndex)
+							.getValorSaldo());
 				default:
 					return null;
 				}
@@ -429,7 +428,7 @@ public class MainApp {
 
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
-				exercicio.processarSaldos((CentroCusto) evt.getNewValue());
+				// exercicio.processarSaldos((CentroCusto) evt.getNewValue());
 				table.repaint();
 			}
 		});
@@ -468,7 +467,9 @@ public class MainApp {
 		final JDialog saldoDialog = new JDialog(mainFrame, "Manter contas",
 				true);
 
-		final List<Conta> todasContas = exercicio.getPlano().getTodasContas();
+		RepositorioPlano repositorioPlano = new RepositorioPlano();
+		final PlanoDeContas plano = repositorioPlano.retrievePlano();
+		final List<Conta> todasContas = plano.getTodasContas();
 		final SelectionInList<Conta> selectionInList = new SelectionInList<Conta>(
 				todasContas);
 		final AbstractTableAdapter<Historico> tableAdapter = new AbstractTableAdapter<Historico>(
@@ -605,8 +606,9 @@ public class MainApp {
 	}
 
 	private void reconstruir(final List<Conta> todasContas) {
-		todasContas.clear();
-		todasContas.addAll(exercicio.getPlano().getTodasContas());
+		// FIXME
+		// todasContas.clear();
+		// todasContas.addAll(exercicio.getPlano().getTodasContas());
 	}
 
 	protected void editConta(Conta conta) {
@@ -626,8 +628,9 @@ public class MainApp {
 
 		JTextField nomeTextField = BasicComponentFactory.createTextField(model
 				.getBufferedModel("nome"));
-		List<ContaSintetica> contasSinteticas = exercicio.getPlano()
-				.getContasSinteticas();
+		RepositorioPlano repPlano = new RepositorioPlano();
+		PlanoDeContas plano = repPlano.retrievePlano();
+		List<ContaSintetica> contasSinteticas = plano.getContasSinteticas();
 		JComboBox contasSinteticasComboBox = BasicComponentFactory
 				.createComboBox(new SelectionInList<ContaSintetica>(
 						contasSinteticas, model.getBufferedModel("contaPai")));
@@ -646,7 +649,8 @@ public class MainApp {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ValidationResult result = model.getValidationResultModel().getResult();
+				ValidationResult result = model.getValidationResultModel()
+						.getResult();
 				if (result.getErrors().size() > 0) {
 					JOptionPane.showMessageDialog(mainFrame,
 							result.getMessagesText());
@@ -674,8 +678,11 @@ public class MainApp {
 
 		JTextField nomeTextField = BasicComponentFactory.createTextField(model
 				.getBufferedModel("nome"));
-		List<ContaSintetica> contasSinteticas = exercicio.getPlano()
-				.getContasSinteticas();
+
+		RepositorioPlano repositorioPlano = new RepositorioPlano();
+		PlanoDeContas plano = repositorioPlano.retrievePlano();
+
+		List<ContaSintetica> contasSinteticas = plano.getContasSinteticas();
 		JComboBox contasSinteticasComboBox = BasicComponentFactory
 				.createComboBox(new SelectionInList<ContaSintetica>(
 						contasSinteticas, model.getBufferedModel("contaPai")));
@@ -694,7 +701,8 @@ public class MainApp {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				ValidationResult result = model.getValidationResultModel().getResult();
+				ValidationResult result = model.getValidationResultModel()
+						.getResult();
 				if (result.getErrors().size() > 0) {
 					JOptionPane.showMessageDialog(mainFrame,
 							result.getMessagesText());

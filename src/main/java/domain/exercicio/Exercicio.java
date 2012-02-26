@@ -13,13 +13,11 @@ import domain.conta.CentroCusto;
 import domain.conta.Conta;
 import domain.conta.ContaAnalitica;
 import domain.conta.ContaSintetica;
-import domain.conta.PlanoDeContas;
 
 public class Exercicio implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final Periodo periodo = new Periodo();
-	private PlanoDeContas plano;
 	private final List<CentroCusto> centrosCusto = new ArrayList<CentroCusto>();
 	private final List<Historico> historicos = new ArrayList<Historico>();
 
@@ -29,26 +27,17 @@ public class Exercicio implements Serializable {
 	public Exercicio() {
 	}
 
-	public Exercicio(Date dataInicio, Date dataFim, PlanoDeContas plano) {
+	public Exercicio(Date dataInicio, Date dataFim) {
 		this();
 
 		getPeriodo().setInicio(dataInicio);
 		getPeriodo().setFim(dataFim);
 		getFiltro().setInicio(dataInicio);
 		getFiltro().setFim(dataFim);
-		setPlano(plano);
 	}
 
 	public Periodo getPeriodo() {
 		return periodo;
-	}
-
-	public PlanoDeContas getPlano() {
-		return plano;
-	}
-
-	public void setPlano(PlanoDeContas plano) {
-		this.plano = plano;
 	}
 
 	public List<CentroCusto> getCentrosCusto() {
@@ -142,12 +131,6 @@ public class Exercicio implements Serializable {
 		});
 
 		return historicoConta;
-	}
-
-	public void processarSaldos(CentroCusto centroCusto) {
-		for (Conta conta : getPlano().getTodasContas()) {
-			processarSaldo(conta, centroCusto);
-		}
 	}
 
 	private void processarSaldo(Conta conta, CentroCusto centroCusto) {

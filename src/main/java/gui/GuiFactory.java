@@ -21,6 +21,8 @@ import com.jgoodies.forms.layout.FormLayout;
 
 import domain.conta.CentroCusto;
 import domain.conta.ContaAnalitica;
+import domain.conta.PlanoDeContas;
+import domain.conta.RepositorioPlano;
 import domain.exercicio.Exercicio;
 import domain.exercicio.presentation.HistoricoPresentation;
 
@@ -31,8 +33,9 @@ public class GuiFactory {
 		JFormattedTextField dataHoraField = BasicComponentFactory
 				.createDateField(historicoPresentation
 						.getBufferedModel("dataHora"));
-		List<ContaAnalitica> contasAnaliticas = exercicio.getPlano()
-				.getContasAnaliticas();
+		RepositorioPlano repositorioPlano = new RepositorioPlano();
+		PlanoDeContas plano = repositorioPlano.retrievePlano();
+		List<ContaAnalitica> contasAnaliticas = plano.getContasAnaliticas();
 		JComboBox debitoComboBox = BasicComponentFactory
 				.createComboBox(new SelectionInList<ContaAnalitica>(
 						contasAnaliticas, historicoPresentation

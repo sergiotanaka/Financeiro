@@ -10,6 +10,10 @@ import java.util.List;
 import util.database.ConnectionHolder;
 import util.database.OidGenerator;
 
+/**
+ * TODO extrair DAOs;<br>
+ * TODO colocar pre/pos/invariante?
+ */
 public class RepositorioPlano {
 	/**
 	 * Recupera o plano de conta.
@@ -34,7 +38,7 @@ public class RepositorioPlano {
 	 * @param plano
 	 *            {@link PlanoDeContas}.
 	 */
-	public void updatePlano(PlanoDeContas plano) {
+	public void storePlano(PlanoDeContas plano) {
 		// 1. atualiza ou insere a conta.
 		for (Conta conta : plano.getTodasContas()) {
 			updateOrCreateConta(conta);
@@ -58,7 +62,7 @@ public class RepositorioPlano {
 
 	private List<Conta> getContasPorPai(ContaSintetica contaPai) {
 		try {
-			List<Conta> contas = new ArrayList<Conta>();
+			List<Conta> subContas = new ArrayList<Conta>();
 
 			Statement st = ConnectionHolder.getConnection().createStatement();
 			ResultSet rs = st
@@ -67,20 +71,21 @@ public class RepositorioPlano {
 			while (rs.next()) {
 				// 1 == ContaSintetica
 				// 2 == ContaAnalitica
-				Conta conta = null;
+				Conta subConta = null;
 				if (rs.getInt(3) == 1) {
-					conta = new ContaSintetica();
+					subConta = new ContaSintetica();
 				} else if (rs.getInt(3) == 2) {
-					conta = new ContaAnalitica();
+					subConta = new ContaAnalitica();
 				}
-				conta.setOid(rs.getLong(1));
-				conta.setNome(rs.getString(2));
-				contas.add(conta);
+				subConta.setOid(rs.getLong(1));
+				subConta.setNome(rs.getString(2));
+
+				subContas.add(subConta);
 			}
 			rs.close();
 			st.close();
 
-			return contas;
+			return subContas;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
@@ -93,33 +98,32 @@ public class RepositorioPlano {
 	 * @param conta
 	 */
 	private void updateOrCreateConta(Conta conta) {
-		try {
-			// 1. atualiza ou insere a conta.
-			if (conta.getOid() == 0) {
-				// inserir
-				createConta(conta);
-			} else {
-				// atualizar
-				updateConta(conta);
-			}
-
-			int foovalue = 500;
-			PreparedStatement st = ConnectionHolder
-					.getConnection()
-					.prepareStatement(
-							"UPDATE \"CONTA\" SET \"NOME\" = ?, \"NOME_CONTA_PAI\" = ? WHERE oid = ?");
-			st.setInt(1, foovalue);
-			int rowsDeleted = st.executeUpdate();
-			System.out.println(rowsDeleted + " rows deleted");
-			st.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
+		// 1. atualiza ou insere a conta.
+		if (conta.getOid() == 0) {
+			createConta(conta);
+		} else {
+			updateConta(conta);
 		}
 	}
 
 	private void updateConta(Conta conta) {
-		// TODO Auto-generated method stub
+		try {
+			// 2. preparar o statement
+			PreparedStatement st = ConnectionHolder.getConnection()
+					.prepareStatement(
+							"update conta set nome = ?,  oid_conta_pai = ?, tipo_conta =? "
+									+ " where oid_conta = ?");
+			st.setString(1, conta.getNome());
+			st.setLong(2, conta.getContaPai().getOid());
+			st.setInt(3, conta instanceof ContaSintetica ? 1 : 2);
+			st.setLong(4, conta.getOid());
 
+			// 3. executar
+			st.executeUpdate();
+			st.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void createConta(Conta conta) {
@@ -138,10 +142,9 @@ public class RepositorioPlano {
 			st.setInt(4, conta instanceof ContaSintetica ? 1 : 2);
 
 			// 3. executar
-			int rowsInserted = st.executeUpdate();
+			st.executeUpdate();
 			st.close();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
