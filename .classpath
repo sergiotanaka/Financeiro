@@ -3,7 +3,7 @@
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/validator-ex"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/jgoodies-binding-2.5.1/jgoodies-binding-2.5.1.jar"/>
+	<classpathentry kind="lib" path="lib/jgoodies-binding-2.5.1/jgoodies-binding-2.5.1.jar" sourcepath="C:/Users/Suiani/workspace/Financeiro/lib/jgoodies-binding-2.5.1"/>
 	<classpathentry kind="lib" path="lib/jgoodies-binding-2.5.1/lib/jgoodies-common-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/jgoodies-forms-1.4.2/jgoodies-forms-1.4.2.jar"/>
 	<classpathentry kind="lib" path="lib/jgoodies-validation-2.4.0/jgoodies-validation-2.4.0.jar"/>

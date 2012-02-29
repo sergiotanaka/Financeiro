@@ -1,6 +1,6 @@
 package application;
 
-import gui.GuiFactory;
+import gui.GuiBuilder;
 import gui.MainPanel;
 
 import java.awt.Window;
@@ -12,6 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,26 +32,22 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
+
+import util.database.ConnectionHolder;
 
 import com.jgoodies.binding.adapter.AbstractTableAdapter;
 import com.jgoodies.binding.adapter.BasicComponentFactory;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueHolder;
-import com.jgoodies.forms.builder.ButtonBarBuilder2;
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.validation.ValidationResult;
-import com.pinguin.validation.SelfValidatorPresentationModel;
 
 import domain.conta.CentroCusto;
 import domain.conta.Conta;
 import domain.conta.ContaAnalitica;
-import domain.conta.ContaSintetica;
 import domain.conta.PlanoDeContas;
 import domain.conta.RepositorioPlano;
-import domain.conta.validator.ContaAnaliticaValidator;
-import domain.conta.validator.ContaSinteticaValidator;
 import domain.exercicio.Exercicio;
 import domain.exercicio.Historico;
 import domain.exercicio.RepositorioExercicio;
@@ -69,7 +66,6 @@ public class MainApp {
 
 	private JFrame mainFrame;
 	private Exercicio exercicio;
-	private GuiFactory guiFactory = new GuiFactory();
 
 	public MainApp() {
 	}
@@ -91,11 +87,18 @@ public class MainApp {
 			Date fim = calendar.getTime();
 
 			exercicio = new Exercicio(inicio, fim);
-			// exercicio = new Exercicio(inicio, fim,
-			// PlanoDeContas.buildPlano());
 			exercicio.getCentrosCusto().addAll(
 					Arrays.asList(new CentroCusto("Sergio"), new CentroCusto(
 							"Suiani")));
+		}
+		
+		try {
+			ConnectionHolder.buildConnection();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Falha ao conectar ao banco de dados.", "Erro", JOptionPane.ERROR_MESSAGE);
+			
+			return;
 		}
 
 		initMainFrame();
@@ -169,18 +172,18 @@ public class MainApp {
 	}
 
 	public void manterHistorico(final HistoricoPresentation model, Action action) {
-		JPanel historicoPanel = guiFactory.createHistoricoPanel(model,
+		JPanel historicoPanel = GuiBuilder.buildHistoricoPanel(model,
 				exercicio, action);
 
-		final JDialog lancarDialog = new JDialog(mainFrame, "Histórico", true);
+		final JDialog manterHistoricoDialog = new JDialog(mainFrame, "Histórico", true);
 		if (action instanceof DisposeContainerAction) {
-			((DisposeContainerAction) action).setContainer(lancarDialog);
+			((DisposeContainerAction) action).setContainer(manterHistoricoDialog);
 		}
-		lancarDialog.getContentPane().add(historicoPanel);
-		lancarDialog.pack();
-		lancarDialog.setResizable(false);
-		lancarDialog.setLocationRelativeTo(mainFrame);
-		lancarDialog.setVisible(true);
+		manterHistoricoDialog.getContentPane().add(historicoPanel);
+		manterHistoricoDialog.pack();
+		manterHistoricoDialog.setResizable(false);
+		manterHistoricoDialog.setLocationRelativeTo(mainFrame);
+		manterHistoricoDialog.setVisible(true);
 	}
 
 	public void verHistorico() {
@@ -464,261 +467,7 @@ public class MainApp {
 	}
 
 	public void manterContas() {
-		final JDialog saldoDialog = new JDialog(mainFrame, "Manter contas",
-				true);
-
-		RepositorioPlano repositorioPlano = new RepositorioPlano();
-		final PlanoDeContas plano = repositorioPlano.retrievePlano();
-		final List<Conta> todasContas = plano.getTodasContas();
-		final SelectionInList<Conta> selectionInList = new SelectionInList<Conta>(
-				todasContas);
-		final AbstractTableAdapter<Historico> tableAdapter = new AbstractTableAdapter<Historico>(
-				"Conta") {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public Object getValueAt(int rowIndex, int columnIndex) {
-				switch (columnIndex) {
-				case 0:
-					return todasContas.get(rowIndex).toString();
-				default:
-					return null;
-				}
-			}
-		};
-		final JTable table = BasicComponentFactory.createTable(selectionInList,
-				tableAdapter);
-
-		DefaultFormBuilder builder = new DefaultFormBuilder(new FormLayout(
-				"p:g"));
-		builder.setDefaultDialogBorder();
-		builder.append(new JScrollPane(table));
-
-		ButtonBarBuilder2 bbBuilder = ButtonBarBuilder2
-				.createLeftToRightBuilder();
-		ButtonBarBuilder2 bbBuilder2 = ButtonBarBuilder2
-				.createLeftToRightBuilder();
-
-		JButton editarButton = new JButton("Editar");
-		builder.append(editarButton);
-		editarButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Conta conta = selectionInList.getSelection();
-				MainApp.this.editConta(conta);
-				reconstruir(todasContas);
-				table.repaint();
-			}
-		});
-
-		JButton addCtSinteticaButton = new JButton("Add conta sintética");
-		addCtSinteticaButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				ContaSintetica conta = new ContaSintetica();
-				MainApp.this.editConta(conta);
-				reconstruir(todasContas);
-				table.repaint();
-			}
-		});
-
-		JButton addCtAnaliticaButton = new JButton("Add conta analítica");
-		addCtAnaliticaButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				ContaAnalitica conta = new ContaAnalitica();
-				MainApp.this.editConta(conta);
-				reconstruir(todasContas);
-				table.repaint();
-			}
-		});
-
-		JButton removerCtButton = new JButton("Remover");
-		removerCtButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Conta conta = selectionInList.getSelection();
-				ContaSintetica contaPai = conta.getContaPai();
-				if (contaPai == null) {
-					JOptionPane.showMessageDialog(mainFrame,
-							"Contas pais não podem ser excluídas.");
-					return;
-				}
-
-				if (conta instanceof ContaSintetica) {
-					if (((ContaSintetica) conta).getSubContas().size() > 0) {
-						JOptionPane.showMessageDialog(mainFrame,
-								"Subcontas devem ser excluídas antes.");
-						return;
-					}
-				}
-
-				int ret = JOptionPane.showConfirmDialog(mainFrame,
-						"Confirma a exclusão da conta?", "Confirmação",
-						JOptionPane.YES_NO_OPTION);
-				if (ret == JOptionPane.YES_OPTION) {
-					contaPai.removerSubConta(conta);
-					reconstruir(todasContas);
-					table.repaint();
-				}
-			}
-		});
-		JButton subirButton = new JButton("Subir");
-		subirButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Conta conta = selectionInList.getSelection();
-				ContaSintetica contaPai = conta.getContaPai();
-				contaPai.subirConta(conta);
-				reconstruir(todasContas);
-				table.repaint();
-			}
-		});
-		JButton descerButton = new JButton("Descer");
-		descerButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Conta conta = selectionInList.getSelection();
-				ContaSintetica contaPai = conta.getContaPai();
-				contaPai.descerConta(conta);
-				reconstruir(todasContas);
-				table.repaint();
-			}
-		});
-
-		bbBuilder.addButton(editarButton, addCtSinteticaButton,
-				addCtAnaliticaButton);
-		bbBuilder2.addButton(removerCtButton, subirButton, descerButton);
-		builder.append(bbBuilder.getPanel());
-		builder.append(bbBuilder2.getPanel());
-
-		saldoDialog.getContentPane().add(builder.getPanel());
-		saldoDialog.pack();
-		saldoDialog.setResizable(false);
-		saldoDialog.setLocationRelativeTo(mainFrame);
-		saldoDialog.setVisible(true);
-	}
-
-	private void reconstruir(final List<Conta> todasContas) {
-		// FIXME
-		// todasContas.clear();
-		// todasContas.addAll(exercicio.getPlano().getTodasContas());
-	}
-
-	protected void editConta(Conta conta) {
-		if (conta instanceof ContaAnalitica) {
-			this.editConta((ContaAnalitica) conta);
-		} else if (conta instanceof ContaSintetica) {
-			this.editConta((ContaSintetica) conta);
-		}
-	}
-
-	protected void editConta(final ContaAnalitica conta) {
-		final JDialog editarDialog = new JDialog(mainFrame, "Conta analítica",
-				true);
-
-		final SelfValidatorPresentationModel<ContaAnalitica> model = new SelfValidatorPresentationModel<ContaAnalitica>(
-				conta, new ContaAnaliticaValidator());
-
-		JTextField nomeTextField = BasicComponentFactory.createTextField(model
-				.getBufferedModel("nome"));
-		RepositorioPlano repPlano = new RepositorioPlano();
-		PlanoDeContas plano = repPlano.retrievePlano();
-		List<ContaSintetica> contasSinteticas = plano.getContasSinteticas();
-		JComboBox contasSinteticasComboBox = BasicComponentFactory
-				.createComboBox(new SelectionInList<ContaSintetica>(
-						contasSinteticas, model.getBufferedModel("contaPai")));
-
-		DefaultFormBuilder builder = new DefaultFormBuilder(new FormLayout(
-				"p:g"));
-		builder.setDefaultDialogBorder();
-		builder.append("Conta pai:", contasSinteticasComboBox);
-		builder.append("Nome:", nomeTextField);
-		builder.appendRelatedComponentsGapRow();
-		builder.appendRow("p");
-
-		builder.nextRow(2);
-		JButton okButton = new JButton("Ok");
-		okButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				ValidationResult result = model.getValidationResultModel()
-						.getResult();
-				if (result.getErrors().size() > 0) {
-					JOptionPane.showMessageDialog(mainFrame,
-							result.getMessagesText());
-					return;
-				}
-				model.triggerCommit();
-				editarDialog.dispose();
-			}
-		});
-		builder.append(okButton);
-
-		editarDialog.getContentPane().add(builder.getPanel());
-		editarDialog.pack();
-		editarDialog.setResizable(false);
-		editarDialog.setLocationRelativeTo(mainFrame);
-		editarDialog.setVisible(true);
-	}
-
-	protected void editConta(final ContaSintetica conta) {
-
-		final JDialog editarDialog = new JDialog(mainFrame, "Conta sintética",
-				true);
-		final SelfValidatorPresentationModel<ContaSintetica> model = new SelfValidatorPresentationModel<ContaSintetica>(
-				conta, new ContaSinteticaValidator());
-
-		JTextField nomeTextField = BasicComponentFactory.createTextField(model
-				.getBufferedModel("nome"));
-
-		RepositorioPlano repositorioPlano = new RepositorioPlano();
-		PlanoDeContas plano = repositorioPlano.retrievePlano();
-
-		List<ContaSintetica> contasSinteticas = plano.getContasSinteticas();
-		JComboBox contasSinteticasComboBox = BasicComponentFactory
-				.createComboBox(new SelectionInList<ContaSintetica>(
-						contasSinteticas, model.getBufferedModel("contaPai")));
-
-		DefaultFormBuilder builder = new DefaultFormBuilder(new FormLayout(
-				"p:g"));
-		builder.setDefaultDialogBorder();
-		builder.append("Conta pai:", contasSinteticasComboBox);
-		builder.append("Nome:", nomeTextField);
-		builder.appendRelatedComponentsGapRow();
-		builder.appendRow("p");
-
-		builder.nextRow(2);
-		JButton okButton = new JButton("Ok");
-		okButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				ValidationResult result = model.getValidationResultModel()
-						.getResult();
-				if (result.getErrors().size() > 0) {
-					JOptionPane.showMessageDialog(mainFrame,
-							result.getMessagesText());
-					return;
-				}
-				model.triggerCommit();
-				editarDialog.dispose();
-			}
-		});
-		builder.append(okButton);
-
-		editarDialog.getContentPane().add(builder.getPanel());
-		editarDialog.pack();
-		editarDialog.setResizable(false);
-		editarDialog.setLocationRelativeTo(mainFrame);
-		editarDialog.setVisible(true);
+		ManterPlano.executar(mainFrame);
 	}
 
 	public String formatDinheiro(double dinheiro) {

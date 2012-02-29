@@ -9,25 +9,33 @@ import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 
+import com.jgoodies.binding.adapter.AbstractTableAdapter;
 import com.jgoodies.binding.adapter.BasicComponentFactory;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ConverterFactory;
+import com.jgoodies.forms.builder.ButtonBarBuilder2;
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.factories.ButtonBarFactory;
 import com.jgoodies.forms.layout.FormLayout;
 
 import domain.conta.CentroCusto;
+import domain.conta.Conta;
 import domain.conta.ContaAnalitica;
 import domain.conta.PlanoDeContas;
 import domain.conta.RepositorioPlano;
 import domain.exercicio.Exercicio;
+import domain.exercicio.Historico;
 import domain.exercicio.presentation.HistoricoPresentation;
 
-public class GuiFactory {
-	public JPanel createHistoricoPanel(
+public class GuiBuilder {
+	
+	public static JPanel buildHistoricoPanel(
 			HistoricoPresentation historicoPresentation, Exercicio exercicio,
 			Action okAction) {
 		JFormattedTextField dataHoraField = BasicComponentFactory
@@ -80,6 +88,52 @@ public class GuiFactory {
 
 		builder.append(ButtonBarFactory.buildOKBar(new JButton(okAction)),
 				builder.getColumnCount());
+
+		return builder.getPanel();
+	}
+
+	public static JPanel buildPlanoContaPanel(final List<Conta> todasContas,
+			final JFrame mainFrame) {
+		final SelectionInList<Conta> selectionInList = new SelectionInList<Conta>(
+				todasContas);
+		final AbstractTableAdapter<Historico> tableAdapter = new AbstractTableAdapter<Historico>(
+				"Conta") {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Object getValueAt(int rowIndex, int columnIndex) {
+				switch (columnIndex) {
+				case 0:
+					return todasContas.get(rowIndex).toString();
+				default:
+					return null;
+				}
+			}
+		};
+		final JTable table = BasicComponentFactory.createTable(selectionInList,
+				tableAdapter);
+
+		DefaultFormBuilder builder = new DefaultFormBuilder(new FormLayout(
+				"p:g"));
+		builder.setDefaultDialogBorder();
+		builder.append(new JScrollPane(table));
+		ButtonBarBuilder2 bbBuilder = ButtonBarBuilder2
+				.createLeftToRightBuilder();
+		ButtonBarBuilder2 bbBuilder2 = ButtonBarBuilder2
+				.createLeftToRightBuilder();
+
+		JButton editarButton = new JButton("Editar");
+		JButton addCtSinteticaButton = new JButton("Add conta sintética");
+		JButton addCtAnaliticaButton = new JButton("Add conta analítica");
+		JButton removerCtButton = new JButton("Remover");
+		JButton subirButton = new JButton("Subir");
+		JButton descerButton = new JButton("Descer");
+
+		bbBuilder.addButton(editarButton, addCtSinteticaButton,
+				addCtAnaliticaButton);
+		bbBuilder2.addButton(removerCtButton, subirButton, descerButton);
+		builder.append(bbBuilder.getPanel());
+		builder.append(bbBuilder2.getPanel());
 
 		return builder.getPanel();
 	}

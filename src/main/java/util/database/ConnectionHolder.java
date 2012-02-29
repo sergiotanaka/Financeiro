@@ -15,7 +15,7 @@ public class ConnectionHolder {
 		return connection;
 	}
 
-	private static void buildConnection() throws SQLException {
+	public static void buildConnection() throws SQLException {
 		// FIXME corrigir host e database
 		connection = DriverManager.getConnection(
 				"jdbc:postgresql://pinguin-29fe670/financeiro", "postgres",
